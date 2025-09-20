@@ -918,7 +918,7 @@ export default function AdminDashboard() {
 
       {/* Product Modal */}
       <Dialog open={isProductModalOpen} onOpenChange={setIsProductModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingProduct ? "Edit Product" : "Add Product"}</DialogTitle>
           </DialogHeader>
@@ -964,7 +964,7 @@ export default function AdminDashboard() {
 
       {/* Accommodation Modal */}
       <Dialog open={isAccommodationModalOpen} onOpenChange={setIsAccommodationModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingAccommodation ? "Edit Accommodation" : "Add Accommodation"}</DialogTitle>
           </DialogHeader>
@@ -987,7 +987,7 @@ export default function AdminDashboard() {
 
       {/* Shraddha Package Modal */}
       <Dialog open={isShraddhaModalOpen} onOpenChange={setIsShraddhaModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingShraddha ? "Edit Shraddha Package" : "Add Shraddha Package"}</DialogTitle>
           </DialogHeader>
@@ -1010,7 +1010,7 @@ export default function AdminDashboard() {
 
       {/* Banner Modal */}
       <Dialog open={isBannerModalOpen} onOpenChange={setIsBannerModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingBanner ? "Edit Banner" : "Add Banner"}</DialogTitle>
           </DialogHeader>
