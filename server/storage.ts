@@ -35,8 +35,8 @@ export interface IStorage {
   // Shraddha Packages
   getShraddhaPackages(): Promise<ShraddhaPackage[]>;
   getShraddhaPackage(id: string): Promise<ShraddhaPackage | undefined>;
-  createShraddhaPackage(package: InsertShraddhaPackage): Promise<ShraddhaPackage>;
-  updateShraddhaPackage(id: string, package: Partial<InsertShraddhaPackage>): Promise<ShraddhaPackage>;
+  createShraddhaPackage(shraddhaPackage: InsertShraddhaPackage): Promise<ShraddhaPackage>;
+  updateShraddhaPackage(id: string, updates: Partial<InsertShraddhaPackage>): Promise<ShraddhaPackage>;
   deleteShraddhaPackage(id: string): Promise<void>;
   
   // Enquiries
@@ -284,22 +284,22 @@ export class MemStorage implements IStorage {
     return this.shraddhaPackages.get(id);
   }
 
-  async createShraddhaPackage(insertPackage: InsertShraddhaPackage): Promise<ShraddhaPackage> {
+  async createShraddhaPackage(shraddhaPackage: InsertShraddhaPackage): Promise<ShraddhaPackage> {
     const id = randomUUID();
-    const shraddhaPackage: ShraddhaPackage = { 
-      ...insertPackage, 
+    const shraddhaPackageData: ShraddhaPackage = { 
+      ...shraddhaPackage, 
       id,
       createdAt: new Date(),
     };
-    this.shraddhaPackages.set(id, shraddhaPackage);
-    return shraddhaPackage;
+    this.shraddhaPackages.set(id, shraddhaPackageData);
+    return shraddhaPackageData;
   }
 
   async updateShraddhaPackage(id: string, updates: Partial<InsertShraddhaPackage>): Promise<ShraddhaPackage> {
-    const shraddhaPackage = this.shraddhaPackages.get(id);
-    if (!shraddhaPackage) throw new Error("Shraddha package not found");
+    const existingPackage = this.shraddhaPackages.get(id);
+    if (!existingPackage) throw new Error("Shraddha package not found");
     
-    const updated = { ...shraddhaPackage, ...updates };
+    const updated = { ...existingPackage, ...updates };
     this.shraddhaPackages.set(id, updated);
     return updated;
   }

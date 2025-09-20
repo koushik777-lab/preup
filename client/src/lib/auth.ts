@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { User } from '@shared/schema';
 
 interface AuthContextType {
@@ -10,7 +10,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }): JSX.Element {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -36,10 +36,10 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
 
   const isAdmin = user?.role === 'admin';
 
-  return (
-    <AuthContext.Provider value={{ user, login, logout, isAdmin }}>
-      {children}
-    </AuthContext.Provider>
+  return React.createElement(
+    AuthContext.Provider,
+    { value: { user, login, logout, isAdmin } },
+    children
   );
 }
 
