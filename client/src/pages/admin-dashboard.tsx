@@ -29,7 +29,7 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { Enquiry, Product, Travel, Accommodation, ShraddhaPackage, Banner, InsertProduct, InsertTravel, InsertAccommodation, InsertShraddhaPackage } from "@shared/schema";
+import type { Enquiry, Product, Travel, Accommodation, ShraddhaPackage, Banner, InsertProduct, InsertTravel, InsertAccommodation, InsertShraddhaPackage, InsertBanner } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 
@@ -52,6 +52,10 @@ export default function AdminDashboard() {
   const [editingTravel, setEditingTravel] = useState<Travel | null>(null);
   const [editingAccommodation, setEditingAccommodation] = useState<Accommodation | null>(null);
   const [editingShraddha, setEditingShraddha] = useState<ShraddhaPackage | null>(null);
+  
+  // Banner states
+  const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
+  const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
 
   // Redirect if not admin
   if (!user || !isAdmin) {
@@ -249,6 +253,41 @@ export default function AdminDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/shraddha-packages"] });
       toast({ title: "Success", description: "Shraddha package deleted successfully." });
+    },
+  });
+
+  // Banner mutations
+  const createBannerMutation = useMutation({
+    mutationFn: async (data: InsertBanner) => {
+      return apiRequest("POST", "/api/banners", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/banners"] });
+      setIsBannerModalOpen(false);
+      setEditingBanner(null);
+      toast({ title: "Success", description: "Banner created successfully." });
+    },
+  });
+
+  const updateBannerMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<InsertBanner> }) => {
+      return apiRequest("PUT", `/api/banners/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/banners"] });
+      setIsBannerModalOpen(false);
+      setEditingBanner(null);
+      toast({ title: "Success", description: "Banner updated successfully." });
+    },
+  });
+
+  const deleteBannerMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/banners/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/banners"] });
+      toast({ title: "Success", description: "Banner deleted successfully." });
     },
   });
 
@@ -751,16 +790,69 @@ export default function AdminDashboard() {
               <CardContent className="p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-semibold">Homepage Banners</h2>
-                  <Button>
+                  <Button onClick={() => {
+                    setEditingBanner(null);
+                    setIsBannerModalOpen(true);
+                  }}>
                     <Plus className="w-4 h-4 mr-2" />
                     Add Banner
                   </Button>
                 </div>
                 
-                <div className="text-center py-12 text-muted-foreground">
-                  <BarChart3 className="w-16 h-16 mx-auto mb-4" />
-                  <p>Banner management interface will be implemented here</p>
-                  <p className="text-sm">Create, edit, and manage homepage banners</p>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Subtitle</TableHead>
+                        <TableHead>CTA Text</TableHead>
+                        <TableHead>Order</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {banners.map((banner) => (
+                        <TableRow key={banner.id}>
+                          <TableCell>
+                            <div className="font-medium">{banner.title}</div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm text-muted-foreground truncate max-w-xs">{banner.subtitle}</div>
+                          </TableCell>
+                          <TableCell>{banner.ctaText}</TableCell>
+                          <TableCell>{banner.order}</TableCell>
+                          <TableCell>
+                            <Badge variant={banner.isActive ? "default" : "secondary"}>
+                              {banner.isActive ? "Active" : "Inactive"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingBanner(banner);
+                                  setIsBannerModalOpen(true);
+                                }}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => deleteBannerMutation.mutate(banner.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               </CardContent>
             </Card>
@@ -853,9 +945,20 @@ export default function AdminDashboard() {
           <DialogHeader>
             <DialogTitle>{editingTravel ? "Edit Travel Package" : "Add Travel Package"}</DialogTitle>
           </DialogHeader>
-          <div className="p-4 text-center text-muted-foreground">
-            <p>Travel form component will be implemented</p>
-          </div>
+          <TravelForm 
+            travel={editingTravel}
+            onSubmit={(data) => {
+              if (editingTravel) {
+                updateTravelMutation.mutate({ id: editingTravel.id, data });
+              } else {
+                createTravelMutation.mutate(data);
+              }
+            }}
+            onCancel={() => {
+              setIsTravelModalOpen(false);
+              setEditingTravel(null);
+            }}
+          />
         </DialogContent>
       </Dialog>
 
@@ -865,9 +968,20 @@ export default function AdminDashboard() {
           <DialogHeader>
             <DialogTitle>{editingAccommodation ? "Edit Accommodation" : "Add Accommodation"}</DialogTitle>
           </DialogHeader>
-          <div className="p-4 text-center text-muted-foreground">
-            <p>Accommodation form component will be implemented</p>
-          </div>
+          <AccommodationForm 
+            accommodation={editingAccommodation}
+            onSubmit={(data) => {
+              if (editingAccommodation) {
+                updateAccommodationMutation.mutate({ id: editingAccommodation.id, data });
+              } else {
+                createAccommodationMutation.mutate(data);
+              }
+            }}
+            onCancel={() => {
+              setIsAccommodationModalOpen(false);
+              setEditingAccommodation(null);
+            }}
+          />
         </DialogContent>
       </Dialog>
 
@@ -877,9 +991,43 @@ export default function AdminDashboard() {
           <DialogHeader>
             <DialogTitle>{editingShraddha ? "Edit Shraddha Package" : "Add Shraddha Package"}</DialogTitle>
           </DialogHeader>
-          <div className="p-4 text-center text-muted-foreground">
-            <p>Shraddha package form component will be implemented</p>
-          </div>
+          <ShraddhaPackageForm 
+            shraddhaPackage={editingShraddha}
+            onSubmit={(data) => {
+              if (editingShraddha) {
+                updateShraddhaPackageMutation.mutate({ id: editingShraddha.id, data });
+              } else {
+                createShraddhaPackageMutation.mutate(data);
+              }
+            }}
+            onCancel={() => {
+              setIsShraddhaModalOpen(false);
+              setEditingShraddha(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Banner Modal */}
+      <Dialog open={isBannerModalOpen} onOpenChange={setIsBannerModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editingBanner ? "Edit Banner" : "Add Banner"}</DialogTitle>
+          </DialogHeader>
+          <BannerForm 
+            banner={editingBanner}
+            onSubmit={(data) => {
+              if (editingBanner) {
+                updateBannerMutation.mutate({ id: editingBanner.id, data });
+              } else {
+                createBannerMutation.mutate(data);
+              }
+            }}
+            onCancel={() => {
+              setIsBannerModalOpen(false);
+              setEditingBanner(null);
+            }}
+          />
         </DialogContent>
       </Dialog>
     </div>
@@ -1060,6 +1208,812 @@ function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
           </Button>
           <Button type="submit">
             {product ? "Update Product" : "Create Product"}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
+// Travel Form Component
+interface TravelFormProps {
+  travel?: Travel | null;
+  onSubmit: (data: InsertTravel) => void;
+  onCancel: () => void;
+}
+
+function TravelForm({ travel, onSubmit, onCancel }: TravelFormProps) {
+  const travelSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+    description: z.string().min(1, "Description is required"),
+    price: z.number().min(1, "Price must be greater than 0"),
+    duration: z.string().min(1, "Duration is required"),
+    maxPeople: z.number().min(1, "Max people must be at least 1"),
+    destinations: z.array(z.string()).min(1, "At least one destination is required"),
+    images: z.array(z.string()).min(1, "At least one image URL is required"),
+    inclusions: z.array(z.string()).min(1, "At least one inclusion is required"),
+    exclusions: z.array(z.string()).min(1, "At least one exclusion is required")
+  });
+
+  const form = useForm<z.infer<typeof travelSchema>>({
+    resolver: zodResolver(travelSchema),
+    defaultValues: {
+      name: travel?.name || "",
+      description: travel?.description || "",
+      price: travel?.price || 0,
+      duration: travel?.duration || "",
+      maxPeople: travel?.maxPeople || 1,
+      destinations: travel?.destinations || [""],
+      images: travel?.images || [""],
+      inclusions: travel?.inclusions || [""],
+      exclusions: travel?.exclusions || [""]
+    }
+  });
+
+  const handleArrayChange = (fieldName: "destinations" | "images" | "inclusions" | "exclusions", index: number, value: string) => {
+    const currentArray = form.getValues(fieldName);
+    const newArray = [...currentArray];
+    newArray[index] = value;
+    form.setValue(fieldName, newArray);
+  };
+
+  const addArrayField = (fieldName: "destinations" | "images" | "inclusions" | "exclusions") => {
+    const currentArray = form.getValues(fieldName);
+    form.setValue(fieldName, [...currentArray, ""]);
+  };
+
+  const removeArrayField = (fieldName: "destinations" | "images" | "inclusions" | "exclusions", index: number) => {
+    const currentArray = form.getValues(fieldName);
+    if (currentArray.length > 1) {
+      form.setValue(fieldName, currentArray.filter((_, i) => i !== index));
+    }
+  };
+
+  const ArrayField = ({ name, label }: { name: "destinations" | "images" | "inclusions" | "exclusions"; label: string }) => (
+    <div>
+      <FormLabel>{label}</FormLabel>
+      {form.watch(name).map((item, index) => (
+        <div key={index} className="flex items-center space-x-2 mt-2">
+          <Input
+            placeholder={`Enter ${label.toLowerCase().slice(0, -1)}`}
+            value={item}
+            onChange={(e) => handleArrayChange(name, index, e.target.value)}
+            className="flex-1"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => removeArrayField(name, index)}
+            disabled={form.watch(name).length === 1}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => addArrayField(name)}
+        className="mt-2"
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Add {label.slice(0, -1)}
+      </Button>
+    </div>
+  );
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Package Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter travel package name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Enter package description" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <div className="grid grid-cols-3 gap-4">
+          <FormField
+            control={form.control}
+            name="price"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Price (₹)</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    placeholder="0" 
+                    {...field} 
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="duration"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Duration</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., 5 Days 4 Nights" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="maxPeople"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Max People</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    placeholder="1" 
+                    {...field} 
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        <ArrayField name="destinations" label="Destinations" />
+        <ArrayField name="images" label="Image URLs" />
+        <ArrayField name="inclusions" label="Inclusions" />
+        <ArrayField name="exclusions" label="Exclusions" />
+        
+        <Separator />
+        
+        <div className="flex justify-end space-x-2">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit">
+            {travel ? "Update Package" : "Create Package"}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
+// Accommodation Form Component
+interface AccommodationFormProps {
+  accommodation?: Accommodation | null;
+  onSubmit: (data: InsertAccommodation) => void;
+  onCancel: () => void;
+}
+
+function AccommodationForm({ accommodation, onSubmit, onCancel }: AccommodationFormProps) {
+  const accommodationSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+    description: z.string().min(1, "Description is required"),
+    price: z.number().min(1, "Price must be greater than 0"),
+    location: z.string().min(1, "Location is required"),
+    roomType: z.string().min(1, "Room type is required"),
+    maxGuests: z.number().min(1, "Max guests must be at least 1"),
+    amenities: z.array(z.string()).min(1, "At least one amenity is required"),
+    images: z.array(z.string()).min(1, "At least one image URL is required")
+  });
+
+  const form = useForm<z.infer<typeof accommodationSchema>>({
+    resolver: zodResolver(accommodationSchema),
+    defaultValues: {
+      name: accommodation?.name || "",
+      description: accommodation?.description || "",
+      price: accommodation?.price || 0,
+      location: accommodation?.location || "",
+      roomType: accommodation?.roomType || "",
+      maxGuests: accommodation?.maxGuests || 1,
+      amenities: accommodation?.amenities || [""],
+      images: accommodation?.images || [""]
+    }
+  });
+
+  const handleArrayChange = (fieldName: "amenities" | "images", index: number, value: string) => {
+    const currentArray = form.getValues(fieldName);
+    const newArray = [...currentArray];
+    newArray[index] = value;
+    form.setValue(fieldName, newArray);
+  };
+
+  const addArrayField = (fieldName: "amenities" | "images") => {
+    const currentArray = form.getValues(fieldName);
+    form.setValue(fieldName, [...currentArray, ""]);
+  };
+
+  const removeArrayField = (fieldName: "amenities" | "images", index: number) => {
+    const currentArray = form.getValues(fieldName);
+    if (currentArray.length > 1) {
+      form.setValue(fieldName, currentArray.filter((_, i) => i !== index));
+    }
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Accommodation Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter accommodation name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Enter accommodation description" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Location</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter location" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="roomType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Room Type</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., Deluxe Room, Suite" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="price"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Price per Night (₹)</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    placeholder="0" 
+                    {...field} 
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="maxGuests"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Max Guests</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    placeholder="1" 
+                    {...field} 
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        <div>
+          <FormLabel>Amenities</FormLabel>
+          {form.watch("amenities").map((amenity, index) => (
+            <div key={index} className="flex items-center space-x-2 mt-2">
+              <Input
+                placeholder="Enter amenity"
+                value={amenity}
+                onChange={(e) => handleArrayChange("amenities", index, e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => removeArrayField("amenities", index)}
+                disabled={form.watch("amenities").length === 1}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => addArrayField("amenities")}
+            className="mt-2"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Amenity
+          </Button>
+        </div>
+        
+        <div>
+          <FormLabel>Image URLs</FormLabel>
+          {form.watch("images").map((image, index) => (
+            <div key={index} className="flex items-center space-x-2 mt-2">
+              <Input
+                placeholder="Enter image URL"
+                value={image}
+                onChange={(e) => handleArrayChange("images", index, e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => removeArrayField("images", index)}
+                disabled={form.watch("images").length === 1}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => addArrayField("images")}
+            className="mt-2"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Image
+          </Button>
+        </div>
+        
+        <Separator />
+        
+        <div className="flex justify-end space-x-2">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit">
+            {accommodation ? "Update Accommodation" : "Create Accommodation"}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
+// Shraddha Package Form Component
+interface ShraddhaPackageFormProps {
+  shraddhaPackage?: ShraddhaPackage | null;
+  onSubmit: (data: InsertShraddhaPackage) => void;
+  onCancel: () => void;
+}
+
+function ShraddhaPackageForm({ shraddhaPackage, onSubmit, onCancel }: ShraddhaPackageFormProps) {
+  const shraddhaSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+    description: z.string().min(1, "Description is required"),
+    price: z.number().min(1, "Price must be greater than 0"),
+    duration: z.string().min(1, "Duration is required"),
+    requirements: z.string().min(1, "Requirements are required"),
+    inclusions: z.array(z.string()).min(1, "At least one inclusion is required"),
+    rituals: z.array(z.string()).min(1, "At least one ritual is required")
+  });
+
+  const form = useForm<z.infer<typeof shraddhaSchema>>({
+    resolver: zodResolver(shraddhaSchema),
+    defaultValues: {
+      name: shraddhaPackage?.name || "",
+      description: shraddhaPackage?.description || "",
+      price: shraddhaPackage?.price || 0,
+      duration: shraddhaPackage?.duration || "",
+      requirements: shraddhaPackage?.requirements || "",
+      inclusions: shraddhaPackage?.inclusions || [""],
+      rituals: shraddhaPackage?.rituals || [""]
+    }
+  });
+
+  const handleArrayChange = (fieldName: "inclusions" | "rituals", index: number, value: string) => {
+    const currentArray = form.getValues(fieldName);
+    const newArray = [...currentArray];
+    newArray[index] = value;
+    form.setValue(fieldName, newArray);
+  };
+
+  const addArrayField = (fieldName: "inclusions" | "rituals") => {
+    const currentArray = form.getValues(fieldName);
+    form.setValue(fieldName, [...currentArray, ""]);
+  };
+
+  const removeArrayField = (fieldName: "inclusions" | "rituals", index: number) => {
+    const currentArray = form.getValues(fieldName);
+    if (currentArray.length > 1) {
+      form.setValue(fieldName, currentArray.filter((_, i) => i !== index));
+    }
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Package Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter shraddha package name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Enter package description" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="price"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Price (₹)</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    placeholder="0" 
+                    {...field} 
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="duration"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Duration</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., 3 hours, 1 day" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        <FormField
+          control={form.control}
+          name="requirements"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Requirements</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Enter requirements for the ritual" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <div>
+          <FormLabel>Inclusions</FormLabel>
+          {form.watch("inclusions").map((inclusion, index) => (
+            <div key={index} className="flex items-center space-x-2 mt-2">
+              <Input
+                placeholder="Enter inclusion"
+                value={inclusion}
+                onChange={(e) => handleArrayChange("inclusions", index, e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => removeArrayField("inclusions", index)}
+                disabled={form.watch("inclusions").length === 1}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => addArrayField("inclusions")}
+            className="mt-2"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Inclusion
+          </Button>
+        </div>
+        
+        <div>
+          <FormLabel>Rituals</FormLabel>
+          {form.watch("rituals").map((ritual, index) => (
+            <div key={index} className="flex items-center space-x-2 mt-2">
+              <Input
+                placeholder="Enter ritual"
+                value={ritual}
+                onChange={(e) => handleArrayChange("rituals", index, e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => removeArrayField("rituals", index)}
+                disabled={form.watch("rituals").length === 1}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => addArrayField("rituals")}
+            className="mt-2"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Ritual
+          </Button>
+        </div>
+        
+        <Separator />
+        
+        <div className="flex justify-end space-x-2">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit">
+            {shraddhaPackage ? "Update Package" : "Create Package"}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
+// Banner Form Component
+interface BannerFormProps {
+  banner?: Banner | null;
+  onSubmit: (data: InsertBanner) => void;
+  onCancel: () => void;
+}
+
+function BannerForm({ banner, onSubmit, onCancel }: BannerFormProps) {
+  const bannerSchema = z.object({
+    title: z.string().min(1, "Title is required"),
+    subtitle: z.string().min(1, "Subtitle is required"),
+    image: z.string().min(1, "Image URL is required"),
+    ctaText: z.string().min(1, "CTA text is required"),
+    ctaLink: z.string().min(1, "CTA link is required"),
+    isActive: z.number().min(0).max(1),
+    order: z.number().min(0, "Order must be 0 or greater")
+  });
+
+  const form = useForm<z.infer<typeof bannerSchema>>({
+    resolver: zodResolver(bannerSchema),
+    defaultValues: {
+      title: banner?.title || "",
+      subtitle: banner?.subtitle || "",
+      image: banner?.image || "",
+      ctaText: banner?.ctaText || "",
+      ctaLink: banner?.ctaLink || "",
+      isActive: banner?.isActive || 1,
+      order: banner?.order || 0
+    }
+  });
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Banner Title</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter banner title" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="subtitle"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Subtitle</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Enter banner subtitle" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="image"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Banner Image URL</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter image URL" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="ctaText"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>CTA Button Text</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., Learn More" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="ctaLink"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>CTA Button Link</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., /store" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="order"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Display Order</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    placeholder="0" 
+                    {...field} 
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="isActive"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status</FormLabel>
+                <FormControl>
+                  <Select 
+                    value={field.value.toString()} 
+                    onValueChange={(value) => field.onChange(parseInt(value))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Active</SelectItem>
+                      <SelectItem value="0">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        <Separator />
+        
+        <div className="flex justify-end space-x-2">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit">
+            {banner ? "Update Banner" : "Create Banner"}
           </Button>
         </div>
       </form>
