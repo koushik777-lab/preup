@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,7 +29,9 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { Enquiry, Product, Travel, Accommodation, ShraddhaPackage, Banner } from "@shared/schema";
+import type { Enquiry, Product, Travel, Accommodation, ShraddhaPackage, Banner, InsertProduct, InsertTravel, InsertAccommodation, InsertShraddhaPackage } from "@shared/schema";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Separator } from "@/components/ui/separator";
 
 export default function AdminDashboard() {
   const { user, isAdmin } = useAuth();
@@ -35,6 +40,18 @@ export default function AdminDashboard() {
   const queryClient = useQueryClient();
   const [selectedEnquiry, setSelectedEnquiry] = useState<Enquiry | null>(null);
   const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
+  
+  // Modal states for different entities
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [isTravelModalOpen, setIsTravelModalOpen] = useState(false);
+  const [isAccommodationModalOpen, setIsAccommodationModalOpen] = useState(false);
+  const [isShraddhaModalOpen, setIsShraddhaModalOpen] = useState(false);
+  
+  // Edit states
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingTravel, setEditingTravel] = useState<Travel | null>(null);
+  const [editingAccommodation, setEditingAccommodation] = useState<Accommodation | null>(null);
+  const [editingShraddha, setEditingShraddha] = useState<ShraddhaPackage | null>(null);
 
   // Redirect if not admin
   if (!user || !isAdmin) {
@@ -92,6 +109,146 @@ export default function AdminDashboard() {
         title: "Enquiry Deleted",
         description: "Enquiry has been deleted successfully.",
       });
+    },
+  });
+
+  // Product mutations
+  const createProductMutation = useMutation({
+    mutationFn: async (data: InsertProduct) => {
+      return apiRequest("POST", "/api/products", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      setIsProductModalOpen(false);
+      setEditingProduct(null);
+      toast({ title: "Success", description: "Product created successfully." });
+    },
+  });
+
+  const updateProductMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<InsertProduct> }) => {
+      return apiRequest("PUT", `/api/products/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      setIsProductModalOpen(false);
+      setEditingProduct(null);
+      toast({ title: "Success", description: "Product updated successfully." });
+    },
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/products/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: "Success", description: "Product deleted successfully." });
+    },
+  });
+
+  // Travel mutations
+  const createTravelMutation = useMutation({
+    mutationFn: async (data: InsertTravel) => {
+      return apiRequest("POST", "/api/travels", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/travels"] });
+      setIsTravelModalOpen(false);
+      setEditingTravel(null);
+      toast({ title: "Success", description: "Travel package created successfully." });
+    },
+  });
+
+  const updateTravelMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<InsertTravel> }) => {
+      return apiRequest("PUT", `/api/travels/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/travels"] });
+      setIsTravelModalOpen(false);
+      setEditingTravel(null);
+      toast({ title: "Success", description: "Travel package updated successfully." });
+    },
+  });
+
+  const deleteTravelMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/travels/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/travels"] });
+      toast({ title: "Success", description: "Travel package deleted successfully." });
+    },
+  });
+
+  // Accommodation mutations
+  const createAccommodationMutation = useMutation({
+    mutationFn: async (data: InsertAccommodation) => {
+      return apiRequest("POST", "/api/accommodations", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/accommodations"] });
+      setIsAccommodationModalOpen(false);
+      setEditingAccommodation(null);
+      toast({ title: "Success", description: "Accommodation created successfully." });
+    },
+  });
+
+  const updateAccommodationMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<InsertAccommodation> }) => {
+      return apiRequest("PUT", `/api/accommodations/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/accommodations"] });
+      setIsAccommodationModalOpen(false);
+      setEditingAccommodation(null);
+      toast({ title: "Success", description: "Accommodation updated successfully." });
+    },
+  });
+
+  const deleteAccommodationMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/accommodations/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/accommodations"] });
+      toast({ title: "Success", description: "Accommodation deleted successfully." });
+    },
+  });
+
+  // Shraddha Package mutations
+  const createShraddhaPackageMutation = useMutation({
+    mutationFn: async (data: InsertShraddhaPackage) => {
+      return apiRequest("POST", "/api/shraddha-packages", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shraddha-packages"] });
+      setIsShraddhaModalOpen(false);
+      setEditingShraddha(null);
+      toast({ title: "Success", description: "Shraddha package created successfully." });
+    },
+  });
+
+  const updateShraddhaPackageMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<InsertShraddhaPackage> }) => {
+      return apiRequest("PUT", `/api/shraddha-packages/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shraddha-packages"] });
+      setIsShraddhaModalOpen(false);
+      setEditingShraddha(null);
+      toast({ title: "Success", description: "Shraddha package updated successfully." });
+    },
+  });
+
+  const deleteShraddhaPackageMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/shraddha-packages/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shraddha-packages"] });
+      toast({ title: "Success", description: "Shraddha package deleted successfully." });
     },
   });
 
@@ -318,16 +475,64 @@ export default function AdminDashboard() {
               <CardContent className="p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-semibold">Products Management</h2>
-                  <Button>
+                  <Button onClick={() => {
+                    setEditingProduct(null);
+                    setIsProductModalOpen(true);
+                  }}>
                     <Plus className="w-4 h-4 mr-2" />
                     Add Product
                   </Button>
                 </div>
                 
-                <div className="text-center py-12 text-muted-foreground">
-                  <ShoppingBag className="w-16 h-16 mx-auto mb-4" />
-                  <p>Product management interface will be implemented here</p>
-                  <p className="text-sm">Create, edit, and manage spiritual store items</p>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Price</TableHead>
+                        <TableHead>Stock</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {products.map((product) => (
+                        <TableRow key={product.id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{product.name}</div>
+                              <div className="text-sm text-muted-foreground truncate max-w-xs">{product.description}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{product.category}</TableCell>
+                          <TableCell>₹{product.price}</TableCell>
+                          <TableCell>{product.inStock}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingProduct(product);
+                                  setIsProductModalOpen(true);
+                                }}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => deleteProductMutation.mutate(product.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               </CardContent>
             </Card>
@@ -339,16 +544,64 @@ export default function AdminDashboard() {
               <CardContent className="p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-semibold">Travel Packages Management</h2>
-                  <Button>
+                  <Button onClick={() => {
+                    setEditingTravel(null);
+                    setIsTravelModalOpen(true);
+                  }}>
                     <Plus className="w-4 h-4 mr-2" />
                     Add Package
                   </Button>
                 </div>
                 
-                <div className="text-center py-12 text-muted-foreground">
-                  <MapPin className="w-16 h-16 mx-auto mb-4" />
-                  <p>Travel package management interface will be implemented here</p>
-                  <p className="text-sm">Create, edit, and manage spiritual travel packages</p>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Duration</TableHead>
+                        <TableHead>Price</TableHead>
+                        <TableHead>Max People</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {travels.map((travel) => (
+                        <TableRow key={travel.id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{travel.name}</div>
+                              <div className="text-sm text-muted-foreground truncate max-w-xs">{travel.description}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{travel.duration}</TableCell>
+                          <TableCell>₹{travel.price}</TableCell>
+                          <TableCell>{travel.maxPeople}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingTravel(travel);
+                                  setIsTravelModalOpen(true);
+                                }}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => deleteTravelMutation.mutate(travel.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               </CardContent>
             </Card>
@@ -360,16 +613,66 @@ export default function AdminDashboard() {
               <CardContent className="p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-semibold">Accommodations Management</h2>
-                  <Button>
+                  <Button onClick={() => {
+                    setEditingAccommodation(null);
+                    setIsAccommodationModalOpen(true);
+                  }}>
                     <Plus className="w-4 h-4 mr-2" />
                     Add Accommodation
                   </Button>
                 </div>
                 
-                <div className="text-center py-12 text-muted-foreground">
-                  <Bed className="w-16 h-16 mx-auto mb-4" />
-                  <p>Accommodation management interface will be implemented here</p>
-                  <p className="text-sm">Create, edit, and manage spiritual accommodations</p>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>Room Type</TableHead>
+                        <TableHead>Price</TableHead>
+                        <TableHead>Max Guests</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {accommodations.map((accommodation) => (
+                        <TableRow key={accommodation.id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{accommodation.name}</div>
+                              <div className="text-sm text-muted-foreground truncate max-w-xs">{accommodation.description}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{accommodation.location}</TableCell>
+                          <TableCell>{accommodation.roomType}</TableCell>
+                          <TableCell>₹{accommodation.price}</TableCell>
+                          <TableCell>{accommodation.maxGuests}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingAccommodation(accommodation);
+                                  setIsAccommodationModalOpen(true);
+                                }}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => deleteAccommodationMutation.mutate(accommodation.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               </CardContent>
             </Card>
@@ -381,16 +684,62 @@ export default function AdminDashboard() {
               <CardContent className="p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-semibold">Shraddha Packages Management</h2>
-                  <Button>
+                  <Button onClick={() => {
+                    setEditingShraddha(null);
+                    setIsShraddhaModalOpen(true);
+                  }}>
                     <Plus className="w-4 h-4 mr-2" />
                     Add Package
                   </Button>
                 </div>
                 
-                <div className="text-center py-12 text-muted-foreground">
-                  <FileText className="w-16 h-16 mx-auto mb-4" />
-                  <p>Shraddha package management interface will be implemented here</p>
-                  <p className="text-sm">Create, edit, and manage ritual packages</p>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Duration</TableHead>
+                        <TableHead>Price</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {shraddhaPackages.map((shraddha) => (
+                        <TableRow key={shraddha.id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{shraddha.name}</div>
+                              <div className="text-sm text-muted-foreground truncate max-w-xs">{shraddha.description}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{shraddha.duration}</TableCell>
+                          <TableCell>₹{shraddha.price}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingShraddha(shraddha);
+                                  setIsShraddhaModalOpen(true);
+                                }}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => deleteShraddhaPackageMutation.mutate(shraddha.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               </CardContent>
             </Card>
@@ -474,6 +823,246 @@ export default function AdminDashboard() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Product Modal */}
+      <Dialog open={isProductModalOpen} onOpenChange={setIsProductModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editingProduct ? "Edit Product" : "Add Product"}</DialogTitle>
+          </DialogHeader>
+          <ProductForm 
+            product={editingProduct}
+            onSubmit={(data) => {
+              if (editingProduct) {
+                updateProductMutation.mutate({ id: editingProduct.id, data });
+              } else {
+                createProductMutation.mutate(data);
+              }
+            }}
+            onCancel={() => {
+              setIsProductModalOpen(false);
+              setEditingProduct(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Travel Modal */}
+      <Dialog open={isTravelModalOpen} onOpenChange={setIsTravelModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingTravel ? "Edit Travel Package" : "Add Travel Package"}</DialogTitle>
+          </DialogHeader>
+          <div className="p-4 text-center text-muted-foreground">
+            <p>Travel form component will be implemented</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Accommodation Modal */}
+      <Dialog open={isAccommodationModalOpen} onOpenChange={setIsAccommodationModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editingAccommodation ? "Edit Accommodation" : "Add Accommodation"}</DialogTitle>
+          </DialogHeader>
+          <div className="p-4 text-center text-muted-foreground">
+            <p>Accommodation form component will be implemented</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Shraddha Package Modal */}
+      <Dialog open={isShraddhaModalOpen} onOpenChange={setIsShraddhaModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editingShraddha ? "Edit Shraddha Package" : "Add Shraddha Package"}</DialogTitle>
+          </DialogHeader>
+          <div className="p-4 text-center text-muted-foreground">
+            <p>Shraddha package form component will be implemented</p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+// Form Components
+interface ProductFormProps {
+  product?: Product | null;
+  onSubmit: (data: InsertProduct) => void;
+  onCancel: () => void;
+}
+
+function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
+  const productSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+    description: z.string().min(1, "Description is required"),
+    price: z.number().min(1, "Price must be greater than 0"),
+    category: z.string().min(1, "Category is required"),
+    inStock: z.number().min(0, "Stock must be 0 or greater"),
+    images: z.array(z.string()).min(1, "At least one image URL is required")
+  });
+
+  const form = useForm<z.infer<typeof productSchema>>({
+    resolver: zodResolver(productSchema),
+    defaultValues: {
+      name: product?.name || "",
+      description: product?.description || "",
+      price: product?.price || 0,
+      category: product?.category || "",
+      inStock: product?.inStock || 0,
+      images: product?.images || [""]
+    }
+  });
+
+  const handleImageChange = (index: number, value: string) => {
+    const currentImages = form.getValues("images");
+    const newImages = [...currentImages];
+    newImages[index] = value;
+    form.setValue("images", newImages);
+  };
+
+  const addImageField = () => {
+    const currentImages = form.getValues("images");
+    form.setValue("images", [...currentImages, ""]);
+  };
+
+  const removeImageField = (index: number) => {
+    const currentImages = form.getValues("images");
+    if (currentImages.length > 1) {
+      form.setValue("images", currentImages.filter((_, i) => i !== index));
+    }
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Product Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter product name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Enter product description" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="price"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Price (₹)</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    placeholder="0" 
+                    {...field} 
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="inStock"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Stock Quantity</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    placeholder="0" 
+                    {...field} 
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        <FormField
+          control={form.control}
+          name="category"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Category</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., Spiritual Books, Meditation Items" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <div>
+          <FormLabel>Product Images (URLs)</FormLabel>
+          {form.watch("images").map((image, index) => (
+            <div key={index} className="flex items-center space-x-2 mt-2">
+              <Input
+                placeholder="Enter image URL"
+                value={image}
+                onChange={(e) => handleImageChange(index, e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => removeImageField(index)}
+                disabled={form.watch("images").length === 1}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={addImageField}
+            className="mt-2"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Image
+          </Button>
+        </div>
+        
+        <Separator />
+        
+        <div className="flex justify-end space-x-2">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit">
+            {product ? "Update Product" : "Create Product"}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }
