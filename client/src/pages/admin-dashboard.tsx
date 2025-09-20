@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -1250,42 +1250,46 @@ function TravelForm({ travel, onSubmit, onCancel }: TravelFormProps) {
     }
   });
 
-  const handleArrayChange = (fieldName: "destinations" | "images" | "inclusions" | "exclusions", index: number, value: string) => {
-    const currentArray = form.getValues(fieldName);
-    const newArray = [...currentArray];
-    newArray[index] = value;
-    form.setValue(fieldName, newArray);
-  };
+  const destinationsFieldArray = useFieldArray({
+    control: form.control,
+    name: "destinations"
+  });
 
-  const addArrayField = (fieldName: "destinations" | "images" | "inclusions" | "exclusions") => {
-    const currentArray = form.getValues(fieldName);
-    form.setValue(fieldName, [...currentArray, ""]);
-  };
+  const imagesFieldArray = useFieldArray({
+    control: form.control,
+    name: "images"
+  });
 
-  const removeArrayField = (fieldName: "destinations" | "images" | "inclusions" | "exclusions", index: number) => {
-    const currentArray = form.getValues(fieldName);
-    if (currentArray.length > 1) {
-      form.setValue(fieldName, currentArray.filter((_, i) => i !== index));
-    }
-  };
+  const inclusionsFieldArray = useFieldArray({
+    control: form.control,
+    name: "inclusions"
+  });
 
-  const ArrayField = ({ name, label }: { name: "destinations" | "images" | "inclusions" | "exclusions"; label: string }) => (
+  const exclusionsFieldArray = useFieldArray({
+    control: form.control,
+    name: "exclusions"
+  });
+
+  const ArrayField = ({ name, label, fieldArray }: { 
+    name: "destinations" | "images" | "inclusions" | "exclusions"; 
+    label: string;
+    fieldArray: any;
+  }) => (
     <div>
       <FormLabel>{label}</FormLabel>
-      {form.watch(name).map((item, index) => (
-        <div key={index} className="flex items-center space-x-2 mt-2">
+      {fieldArray.fields.map((field: any, index: number) => (
+        <div key={field.id} className="flex items-center space-x-2 mt-2">
           <Input
             placeholder={`Enter ${label.toLowerCase().slice(0, -1)}`}
-            value={item}
-            onChange={(e) => handleArrayChange(name, index, e.target.value)}
+            {...form.register(`${name}.${index}`)}
             className="flex-1"
           />
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => removeArrayField(name, index)}
-            disabled={form.watch(name).length === 1}
+            onClick={() => fieldArray.remove(index)}
+            disabled={fieldArray.fields.length === 1}
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -1295,7 +1299,7 @@ function TravelForm({ travel, onSubmit, onCancel }: TravelFormProps) {
         type="button"
         variant="outline"
         size="sm"
-        onClick={() => addArrayField(name)}
+        onClick={() => fieldArray.append("")}
         className="mt-2"
       >
         <Plus className="w-4 h-4 mr-2" />
@@ -1389,10 +1393,10 @@ function TravelForm({ travel, onSubmit, onCancel }: TravelFormProps) {
           />
         </div>
         
-        <ArrayField name="destinations" label="Destinations" />
-        <ArrayField name="images" label="Image URLs" />
-        <ArrayField name="inclusions" label="Inclusions" />
-        <ArrayField name="exclusions" label="Exclusions" />
+        <ArrayField name="destinations" label="Destinations" fieldArray={destinationsFieldArray} />
+        <ArrayField name="images" label="Image URLs" fieldArray={imagesFieldArray} />
+        <ArrayField name="inclusions" label="Inclusions" fieldArray={inclusionsFieldArray} />
+        <ArrayField name="exclusions" label="Exclusions" fieldArray={exclusionsFieldArray} />
         
         <Separator />
         
