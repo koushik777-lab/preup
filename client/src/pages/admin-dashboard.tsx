@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, type FieldPathByValue, type Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -1051,7 +1051,7 @@ function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
     images: z.array(z.string()).min(1, "At least one image URL is required")
   });
 
-  const form = useForm<z.infer<typeof productSchema>>({
+  const form = useForm<InsertProduct>({
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: product?.name || "",
@@ -1062,25 +1062,6 @@ function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
       images: product?.images || [""]
     }
   });
-
-  const handleImageChange = (index: number, value: string) => {
-    const currentImages = form.getValues("images");
-    const newImages = [...currentImages];
-    newImages[index] = value;
-    form.setValue("images", newImages);
-  };
-
-  const addImageField = () => {
-    const currentImages = form.getValues("images");
-    form.setValue("images", [...currentImages, ""]);
-  };
-
-  const removeImageField = (index: number) => {
-    const currentImages = form.getValues("images");
-    if (currentImages.length > 1) {
-      form.setValue("images", currentImages.filter((_, i) => i !== index));
-    }
-  };
 
   return (
     <Form {...form}>
@@ -1167,38 +1148,7 @@ function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
           )}
         />
         
-        <div>
-          <FormLabel>Product Images (URLs)</FormLabel>
-          {form.watch("images").map((image, index) => (
-            <div key={index} className="flex items-center space-x-2 mt-2">
-              <Input
-                placeholder="Enter image URL"
-                value={image}
-                onChange={(e) => handleImageChange(index, e.target.value)}
-                className="flex-1"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => removeImageField(index)}
-                disabled={form.watch("images").length === 1}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={addImageField}
-            className="mt-2"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Image
-          </Button>
-        </div>
+        <StringArrayField form={form} name="images" label="Product Images (URLs)" placeholder="Enter image URL" />
         
         <Separator />
         
@@ -1235,7 +1185,7 @@ function TravelForm({ travel, onSubmit, onCancel }: TravelFormProps) {
     exclusions: z.array(z.string()).min(1, "At least one exclusion is required")
   });
 
-  const form = useForm<z.infer<typeof travelSchema>>({
+  const form = useForm<InsertTravel>({
     resolver: zodResolver(travelSchema),
     defaultValues: {
       name: travel?.name || "",
@@ -1249,64 +1199,6 @@ function TravelForm({ travel, onSubmit, onCancel }: TravelFormProps) {
       exclusions: travel?.exclusions || [""]
     }
   });
-
-  const destinationsFieldArray = useFieldArray({
-    control: form.control,
-    name: "destinations"
-  });
-
-  const imagesFieldArray = useFieldArray({
-    control: form.control,
-    name: "images"
-  });
-
-  const inclusionsFieldArray = useFieldArray({
-    control: form.control,
-    name: "inclusions"
-  });
-
-  const exclusionsFieldArray = useFieldArray({
-    control: form.control,
-    name: "exclusions"
-  });
-
-  const ArrayField = ({ name, label, fieldArray }: { 
-    name: "destinations" | "images" | "inclusions" | "exclusions"; 
-    label: string;
-    fieldArray: any;
-  }) => (
-    <div>
-      <FormLabel>{label}</FormLabel>
-      {fieldArray.fields.map((field: any, index: number) => (
-        <div key={field.id} className="flex items-center space-x-2 mt-2">
-          <Input
-            placeholder={`Enter ${label.toLowerCase().slice(0, -1)}`}
-            {...form.register(`${name}.${index}`)}
-            className="flex-1"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => fieldArray.remove(index)}
-            disabled={fieldArray.fields.length === 1}
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        </div>
-      ))}
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => fieldArray.append("")}
-        className="mt-2"
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add {label.slice(0, -1)}
-      </Button>
-    </div>
-  );
 
   return (
     <Form {...form}>
@@ -1393,10 +1285,10 @@ function TravelForm({ travel, onSubmit, onCancel }: TravelFormProps) {
           />
         </div>
         
-        <ArrayField name="destinations" label="Destinations" fieldArray={destinationsFieldArray} />
-        <ArrayField name="images" label="Image URLs" fieldArray={imagesFieldArray} />
-        <ArrayField name="inclusions" label="Inclusions" fieldArray={inclusionsFieldArray} />
-        <ArrayField name="exclusions" label="Exclusions" fieldArray={exclusionsFieldArray} />
+        <StringArrayField form={form} name="destinations" label="Destinations" />
+        <StringArrayField form={form} name="images" label="Image URLs" />
+        <StringArrayField form={form} name="inclusions" label="Inclusions" />
+        <StringArrayField form={form} name="exclusions" label="Exclusions" />
         
         <Separator />
         
@@ -1432,7 +1324,7 @@ function AccommodationForm({ accommodation, onSubmit, onCancel }: AccommodationF
     images: z.array(z.string()).min(1, "At least one image URL is required")
   });
 
-  const form = useForm<z.infer<typeof accommodationSchema>>({
+  const form = useForm<InsertAccommodation>({
     resolver: zodResolver(accommodationSchema),
     defaultValues: {
       name: accommodation?.name || "",
@@ -1445,25 +1337,6 @@ function AccommodationForm({ accommodation, onSubmit, onCancel }: AccommodationF
       images: accommodation?.images || [""]
     }
   });
-
-  const handleArrayChange = (fieldName: "amenities" | "images", index: number, value: string) => {
-    const currentArray = form.getValues(fieldName);
-    const newArray = [...currentArray];
-    newArray[index] = value;
-    form.setValue(fieldName, newArray);
-  };
-
-  const addArrayField = (fieldName: "amenities" | "images") => {
-    const currentArray = form.getValues(fieldName);
-    form.setValue(fieldName, [...currentArray, ""]);
-  };
-
-  const removeArrayField = (fieldName: "amenities" | "images", index: number) => {
-    const currentArray = form.getValues(fieldName);
-    if (currentArray.length > 1) {
-      form.setValue(fieldName, currentArray.filter((_, i) => i !== index));
-    }
-  };
 
   return (
     <Form {...form}>
@@ -1566,71 +1439,8 @@ function AccommodationForm({ accommodation, onSubmit, onCancel }: AccommodationF
           />
         </div>
         
-        <div>
-          <FormLabel>Amenities</FormLabel>
-          {form.watch("amenities").map((amenity, index) => (
-            <div key={index} className="flex items-center space-x-2 mt-2">
-              <Input
-                placeholder="Enter amenity"
-                value={amenity}
-                onChange={(e) => handleArrayChange("amenities", index, e.target.value)}
-                className="flex-1"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => removeArrayField("amenities", index)}
-                disabled={form.watch("amenities").length === 1}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => addArrayField("amenities")}
-            className="mt-2"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Amenity
-          </Button>
-        </div>
-        
-        <div>
-          <FormLabel>Image URLs</FormLabel>
-          {form.watch("images").map((image, index) => (
-            <div key={index} className="flex items-center space-x-2 mt-2">
-              <Input
-                placeholder="Enter image URL"
-                value={image}
-                onChange={(e) => handleArrayChange("images", index, e.target.value)}
-                className="flex-1"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => removeArrayField("images", index)}
-                disabled={form.watch("images").length === 1}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => addArrayField("images")}
-            className="mt-2"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Image
-          </Button>
-        </div>
+        <StringArrayField form={form} name="amenities" label="Amenities" placeholder="Enter amenity" />
+        <StringArrayField form={form} name="images" label="Image URLs" placeholder="Enter image URL" />
         
         <Separator />
         
@@ -1665,7 +1475,7 @@ function ShraddhaPackageForm({ shraddhaPackage, onSubmit, onCancel }: ShraddhaPa
     rituals: z.array(z.string()).min(1, "At least one ritual is required")
   });
 
-  const form = useForm<z.infer<typeof shraddhaSchema>>({
+  const form = useForm<InsertShraddhaPackage>({
     resolver: zodResolver(shraddhaSchema),
     defaultValues: {
       name: shraddhaPackage?.name || "",
@@ -1678,24 +1488,6 @@ function ShraddhaPackageForm({ shraddhaPackage, onSubmit, onCancel }: ShraddhaPa
     }
   });
 
-  const handleArrayChange = (fieldName: "inclusions" | "rituals", index: number, value: string) => {
-    const currentArray = form.getValues(fieldName);
-    const newArray = [...currentArray];
-    newArray[index] = value;
-    form.setValue(fieldName, newArray);
-  };
-
-  const addArrayField = (fieldName: "inclusions" | "rituals") => {
-    const currentArray = form.getValues(fieldName);
-    form.setValue(fieldName, [...currentArray, ""]);
-  };
-
-  const removeArrayField = (fieldName: "inclusions" | "rituals", index: number) => {
-    const currentArray = form.getValues(fieldName);
-    if (currentArray.length > 1) {
-      form.setValue(fieldName, currentArray.filter((_, i) => i !== index));
-    }
-  };
 
   return (
     <Form {...form}>
@@ -1777,71 +1569,8 @@ function ShraddhaPackageForm({ shraddhaPackage, onSubmit, onCancel }: ShraddhaPa
           )}
         />
         
-        <div>
-          <FormLabel>Inclusions</FormLabel>
-          {form.watch("inclusions").map((inclusion, index) => (
-            <div key={index} className="flex items-center space-x-2 mt-2">
-              <Input
-                placeholder="Enter inclusion"
-                value={inclusion}
-                onChange={(e) => handleArrayChange("inclusions", index, e.target.value)}
-                className="flex-1"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => removeArrayField("inclusions", index)}
-                disabled={form.watch("inclusions").length === 1}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => addArrayField("inclusions")}
-            className="mt-2"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Inclusion
-          </Button>
-        </div>
-        
-        <div>
-          <FormLabel>Rituals</FormLabel>
-          {form.watch("rituals").map((ritual, index) => (
-            <div key={index} className="flex items-center space-x-2 mt-2">
-              <Input
-                placeholder="Enter ritual"
-                value={ritual}
-                onChange={(e) => handleArrayChange("rituals", index, e.target.value)}
-                className="flex-1"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => removeArrayField("rituals", index)}
-                disabled={form.watch("rituals").length === 1}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => addArrayField("rituals")}
-            className="mt-2"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Ritual
-          </Button>
-        </div>
+        <StringArrayField form={form} name="inclusions" label="Inclusions" placeholder="Enter inclusion" />
+        <StringArrayField form={form} name="rituals" label="Rituals" placeholder="Enter ritual" />
         
         <Separator />
         
@@ -2022,5 +1751,61 @@ function BannerForm({ banner, onSubmit, onCancel }: BannerFormProps) {
         </div>
       </form>
     </Form>
+  );
+}
+
+// Reusable StringArrayField component for proper focus handling
+interface StringArrayFieldProps<T extends Record<string, any>> {
+  form: any;
+  name: FieldPathByValue<T, string[]>;
+  label: string;
+  placeholder?: string;
+  addLabel?: string;
+}
+
+function StringArrayField<T extends Record<string, any>>({ 
+  form, 
+  name, 
+  label, 
+  placeholder = "",
+  addLabel 
+}: StringArrayFieldProps<T>) {
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: name as any
+  });
+
+  return (
+    <div>
+      <FormLabel>{label}</FormLabel>
+      {fields.map((field, index) => (
+        <div key={field.id} className="flex items-center space-x-2 mt-2">
+          <Input
+            placeholder={placeholder || `Enter ${label.toLowerCase().slice(0, -1)}`}
+            {...form.register(`${name}.${index}` as const)}
+            className="flex-1"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => remove(index)}
+            disabled={fields.length === 1}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => append("")}
+        className="mt-2"
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        {addLabel || `Add ${label.slice(0, -1)}`}
+      </Button>
+    </div>
   );
 }
