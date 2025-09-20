@@ -1,0 +1,142 @@
+
+🟣 Shiva Sadhana – Full Website Prompt
+
+Build a complete multi-page e-commerce style website named “Shiva Sadhana”  👉 All data must be stored in localStorage.
+👉 The site must be fully responsive and deployable directly on Netlify.
+
+⸻
+
+👥 USER VIEW (Customer Side)
+
+This is the version visible to normal visitors.
+
+🔹 Features
+	•	Browse Store, Travel, Accommodation, Shraddha Kriya packages.
+	•	Send enquiries through a universal modal form (auto-fills item details).
+	•	Enquiries saved in localStorage + linked to the logged-in user.
+	•	WhatsApp API integration to auto-send enquiry details:  https://api.whatsapp.com/send?phone=9775137545&text=New Enquiry from {FullName} ({Email}, {Phone}).
+Type: {Store/Travel/etc}. Details: {...}. Message: {message}.
+— Site: shivasadhana.in    	•	Users can Sign up & Login.
+	•	Logged-in users can access /account.html to track their enquiry/booking history.
+	•	Each booking/enquiry shows → item details, enquiry date, status badge (Pending, On Touch, Confirm), with options to Re-send WhatsApp or Cancel.   🧭 NAVBAR + PAGES
+
+The navbar must include:
+	•	Logo (SHIVA SADHANA)             •	Home
+	•	Store
+	•	Travel
+	•	Accommodation
+	•	Shraddha Kriya 
+	•	Login 
+	
+
+🔹 Pages and Features
+	1.	Homepage (index.html)
+	•	Use the existing design from againbhakti.netlify.app (unchanged).
+	•	Only update navbar + footer links to match new structure.
+	2.	Store (store.html)
+	•	Responsive grid with product cards.
+	•	Each card: image, name, price, description, Send Enquiry button.
+	•	Data from products in localStorage.
+	3.	Travel (travel.html)
+	•	Responsive grid for travel packages.
+	•	Each card: slideshow of images, title, location, price, description, Send Enquiry button.
+	•	Data from travels in localStorage.  
+	4.	Accommodation (accommodation.html)
+	•	Grid of accommodations with multi-image carousel.
+	•	Each card: name, location, price per night, details, Send Enquiry button.
+	•	Data from accommodations in localStorage. 
+	5.	Shraddha Kriya (shraddha-kriya.html)
+	•	Grid of packages.
+	•	Each card: title, duration, price, description, Send Enquiry button.
+	•	Data from shraddhaPackages in localStorage.  
+	6.	Login & Signup (login.html)
+	•	Two tabs: Signup + Login.
+	•	Signup → save user in localStorage.
+	•	Login → check credentials.
+	•	If normal user → redirect to /account.html.
+	•	If admin → redirect to /admin.html.  
+	7.	Account (account.html)
+	•	User dashboard.
+	•	Tabs for: Store Orders, Travel, Accommodation, Shraddha Kriya.
+	•	Each enquiry shows: details, date, status badge, re-send WhatsApp, cancel option.  
+	8.	Footer Pages
+	•	/about.html → Content from shivasadhana.in/about-us.
+	•	/squad.html → Content from shivasadhana.in/squad.
+	•	/articles.html → Content from shivasadhana.in/articles.
+	•	/privacy.html → Privacy policy from shivasadhana.in/privacy-policy.
+	•	/refund.html → Refund policy from shivasadhana.in/refund-policy.
+	•	/terms.html → Terms & conditions from shivasadhana.in/terms-and-conditions.
+
+⸻
+
+🔑 ADMIN VIEW (Admin Dashboard)
+
+Accessible only with credentials:
+	•	Email: shivaadmin@gmail.com
+	•	Password: Shiva@admin777
+
+🔹 Features
+
+The admin dashboard has 6 slots (sections), each with full CRUD (Create, Read, Update, Delete).
+	1.	Homepage Banner Editor
+	•	Manage homepage banners.
+	•	Update banner text, add/edit/delete banner images. 
+	2.	Store Management
+	•	CRUD for store products.
+	•	Fields: image, name, price, qty, description. 
+	3.	Travel Management
+	•	CRUD for travel packages.
+	•	Fields: multiple images, title, location, price, description. 
+	4.	Accommodation Management
+	•	CRUD for accommodations.             •          can upload multiple images in accommodation
+	•	Fields: name, location, price per night, multiple images (carousel), details. 
+	5.	Shraddha Kriya Management
+	•	CRUD for packages.
+	•	Fields: title, duration, price, description, image.
+	6.	Enquiry Management
+	•	View enquiries from all sections.
+	•	Update status → Pending (🔴), On Touch (🟡), Confirm (🟢).
+	•	Filter by section (Store/Travel/Accommodation/Shraddha).
+
+🔹 Admin UI
+	•	Sidebar navigation for 6 slots.
+	•	Each section: table view of data + modals for add/edit/delete.
+	•	Instant updates synced with localStorage.
+	•	Clean responsive dashboard design.
+   📦 Data Models (localStorage JSON) users: [{id, name, email, phone, passwordHash}]
+admin: {email, pass}
+banners: [{id, image, title, subtitle, link}]
+products: [{id, name, price, qty, image, desc}]
+travels: [{id, title, location, price, desc, images}]
+accommodations: [{id, name, location, pricePerNight, images[], details}]
+shraddhaPackages: [{id, title, price, duration, desc, image}]
+enquiries: [{id, userId, type, itemId, itemSnapshot, contact, date, status, message}]
+squadMessages: [{id, userId|null, name, email, phone, message, date}]    FOTTER PAGE
+
+
+
+Footer Pages (with navbar + footer):
+	•	/about.html (About Us → reference: About Us page from shivasadhana.in/about-us)
+	•	/squad.html (Sadhana Squad → reference: Squad page from shivasadhana.in/squad)
+	•	/articles.html (Articles → reference: Articles page from shivasadhana.in/articles)
+	•	/privacy.html (Privacy Policy → reference: Privacy page from shivasadhana.in/privacy-policy)
+	•	/refund.html (Refund Policy → reference: Refund page from shivasadhana.in/refund-policy)
+	•	/terms.html (Terms & Conditions → reference: Terms page from shivasadhana.in/terms-and-conditions)
+
+Create a responsive HTML/CSS/JS footer like this: four columns on desktop (brand, head office address, quick links list, subscription panel). Background = deep purple/blue. Headings in golden yellow. 
+
+Column 1 (Brand): Title "SHIVA SADHANA" (bold, golden) + tagline text "Your Spiritual Partner. Connecting faith, culture, and travel experiences together."  
+
+Column 2 (Head Office): Heading "HEAD OFFICE" + multiline address:  
+B 37/171, Birdopur, Dr. Usha Gupta Lane, Mahmoorganj,  
+Varanasi – 221010, Uttar Pradesh, India  
+
+Column 3 (Quick Links): Heading "QUICK LINKS" + vertical list of links: About Us, Sadhana Squad, Articles, Privacy Policy, Refund Policy, Terms And Conditions. Links should have hover color change animation.  
+
+Column 4 (Stay Updated): Heading "STAY UPDATED" + email input placeholder "Your email address", golden "SUBSCRIBE" button, line with contact email "team@shivasadhana.in", and golden "Call Now" button.  
+
+Below all columns: a thin divider line + centered copyright text "©️ 2025 Shiva Sadhana. All rights reserved."  
+
+Extra: Add a small fixed square back-to-top button (blue background with white up-arrow) at bottom-right corner. Include smooth scroll-to-top JS + simple email validation for subscribe. Use Montserrat font and make fully responsive (single column on mobile).    ✅ Deliver a professional, multipage, responsive e-commerce style website for Shiva Sadhana with:
+	•	User View (customer side).
+	•	Admin Dashboard (6 slots with full CRUD + enquiry management).
