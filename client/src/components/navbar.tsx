@@ -3,11 +3,13 @@ import { useState } from "react";
 import { Menu, X, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
+import { useModal } from "@/lib/modal-context";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [location] = useLocation();
   const { user, logout, isAdmin } = useAuth();
+  const { openLoginModal, openRegisterModal } = useModal();
 
   const navigation = [
     { name: "Home", href: "/" },
@@ -72,8 +74,8 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="flex items-center space-x-4">
-                <Button variant="ghost" data-testid="login-button">Login</Button>
-                <Button data-testid="register-button">Register</Button>
+                <Button variant="ghost" onClick={openLoginModal} data-testid="login-button">Login</Button>
+                <Button onClick={openRegisterModal} data-testid="register-button">Register</Button>
               </div>
             )}
           </div>
@@ -119,8 +121,8 @@ export default function Navbar() {
                 </div>
               ) : (
                 <div className="px-3 py-2 space-y-2">
-                  <Button variant="ghost" className="w-full" data-testid="mobile-login-button">Login</Button>
-                  <Button className="w-full" data-testid="mobile-register-button">Register</Button>
+                  <Button variant="ghost" onClick={openLoginModal} className="w-full" data-testid="mobile-login-button">Login</Button>
+                  <Button onClick={openRegisterModal} className="w-full" data-testid="mobile-register-button">Register</Button>
                 </div>
               )}
             </div>
